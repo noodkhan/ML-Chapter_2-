@@ -1,13 +1,3 @@
-Perfect — now we can turn this into a **serious, professional README** because you actually have:
-
-> ✅ Training system
-> ✅ Inference system
-> ✅ Evaluation + visualization
-
-This is no longer a toy — this is a **full ML pipeline project**.
-
----
-
 # 🎬 Movie Rating Prediction System
 
 A complete machine learning pipeline that trains and deploys a model to predict IMDb movie ratings using structured movie data.
