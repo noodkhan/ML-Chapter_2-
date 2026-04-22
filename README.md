@@ -1,35 +1,50 @@
-Here’s a **clean, professional GitHub README** for your project — structured like a real engineering repo, not a beginner one.
+Perfect — now we can turn this into a **serious, professional README** because you actually have:
+
+> ✅ Training system
+> ✅ Inference system
+> ✅ Evaluation + visualization
+
+This is no longer a toy — this is a **full ML pipeline project**.
 
 ---
 
 # 🎬 Movie Rating Prediction System
 
-A machine learning pipeline that predicts IMDb movie ratings based on structured features such as genre, runtime, votes, revenue, and metascore.
+A complete machine learning pipeline that trains and deploys a model to predict IMDb movie ratings using structured movie data.
 
 ---
 
 ## 🚀 Overview
 
-This project demonstrates a complete **end-to-end ML inference pipeline**, including:
+This project implements an **end-to-end machine learning system**, covering:
 
-* Data preprocessing & cleaning
-* Feature engineering (one-hot encoding)
-* Schema alignment with trained model
-* Real-time prediction simulation
-* Visualization of model performance
+* Model training with feature engineering
+* Model serialization (save/load)
+* Prediction pipeline with schema alignment
+* Real-time inference simulation
+* Model evaluation and visualization
 
-The system takes raw movie data and transforms it into a format suitable for prediction, ensuring consistency with the trained model.
+Built using scikit-learn, this project focuses on **data consistency and system design**, not just model accuracy.
 
 ---
 
-## 🧠 Features
+## 🧠 System Architecture
 
-* ✅ Data cleaning (string → numeric transformation)
-* ✅ Genre encoding (multi-label → one-hot)
-* ✅ Column alignment using trained schema
-* ✅ Real-time prediction simulation
-* ✅ Visualization (Actual vs Predicted)
-* ✅ Model evaluation (MSE ready)
+```text
+Raw CSV Data
+     ↓
+Data Cleaning + Feature Engineering
+     ↓
+Train/Test Split
+     ↓
+Model Training (Random Forest)
+     ↓
+Save Model + Schema
+     ↓
+Inference Pipeline (Rebuild Features)
+     ↓
+Prediction + Visualization
+```
 
 ---
 
@@ -37,145 +52,189 @@ The system takes raw movie data and transforms it into a format suitable for pre
 
 ```text
 .
-├── model.pkl              # Trained ML model
-├── columns.pkl            # Training feature schema
-├── imdb_top_1000.csv      # Dataset
-├── main.py                # Main pipeline script
-└── README.md              # Documentation
+├── train.py               # Training pipeline
+├── predict.py             # Inference pipeline
+├── model.pkl              # Trained model
+├── columns.pkl            # Feature schema
+├── imdb_top_1000.csv      # Inference dataset
+├── IMDB-Movie-Data.csv    # Training dataset
+└── README.md
 ```
 
 ---
 
-## ⚙️ How It Works
+## ⚙️ Training Pipeline
 
-### 1. Load Model & Schema
+### 📥 Load & Prepare Data
+
+```python
+df = pd.read_csv("IMDB-Movie-Data.csv")
+df = df.dropna()
+```
+
+---
+
+### 🧹 Feature Selection
+
+```python
+df = df[[
+    "Genre",
+    "Runtime (Minutes)",
+    "Votes",
+    "Revenue (Millions)",
+    "Metascore",
+    "Rating"
+]]
+```
+
+---
+
+### 🔄 Feature Engineering
+
+```python
+genre_dummies = df["Genre"].str.get_dummies(sep=",")
+df = pd.concat([df.drop("Genre", axis=1), genre_dummies], axis=1)
+```
+
+---
+
+### ✂️ Train/Test Split
+
+```python
+X = df.drop("Rating", axis=1)
+y = df["Rating"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+```
+
+---
+
+### 🌲 Model Training
+
+```python
+model = RandomForestRegressor(n_estimators=200, max_depth=10)
+model.fit(X_train, y_train)
+```
+
+---
+
+### 💾 Save Model
+
+```python
+joblib.dump(model, "model.pkl")
+joblib.dump(X.columns, "columns.pkl")
+```
+
+👉 Saving `columns.pkl` ensures **feature consistency during inference**.
+
+---
+
+## 🔮 Prediction Pipeline
+
+### 🧩 Load Model
 
 ```python
 model = joblib.load("model.pkl")
-trained_columns = joblib.load("columns.pkl")
+columns = joblib.load("columns.pkl")
 ```
 
 ---
 
-### 2. Data Preprocessing
-
-* Rename columns to match training format
-* Convert:
-
-  * Runtime → integer
-  * Votes → integer
-  * Revenue → float (millions)
-* Handle missing values
-
----
-
-### 3. Feature Engineering
+### 🔁 Align Input Data
 
 ```python
-genre_Hotcode = df["Genre"].str.get_dummies(sep=", ")
+df_input = df_input.reindex(columns=columns, fill_value=0)
 ```
 
-* Multi-genre → binary columns
+👉 This guarantees:
 
----
-
-### 4. Schema Alignment (Critical Step)
-
-```python
-df = df.reindex(columns=trained_columns, fill_value=0)
-```
-
-Ensures:
-
-* Same feature order as training
+* Same feature order
 * Missing features filled with 0
 
 ---
 
-### 5. Prediction
+### 📊 Predict
 
 ```python
-predictions = model.predict(df)
+prediction = model.predict(df_input)
 ```
 
 ---
 
-### 6. Real-Time Simulation
+## ⚡ Real-Time Prediction Simulation
 
 ```python
 for i in range(n):
+    row = df.iloc[[i]]
     pred = model.predict(row)[0]
-    print(f"Pred: {pred:.2f} | Actual: {actual}")
+    print(f"Pred: {pred:.2f}")
 ```
 
-Simulates a streaming prediction system.
+Simulates a **streaming inference system**.
 
 ---
 
-### 7. Visualization
+## 📈 Model Evaluation
+
+### 🔍 Single Prediction Check
 
 ```python
-plt.plot(actual_ratings[:n])
-plt.plot(predictions[:n])
-```
+movie_df = X_test.sample(1)
 
-Shows model performance over time.
-
----
-
-## 📊 Example Output
-
-```text
-[0] Pred: 8.67 | Actual: 9.2
-[1] Pred: 8.68 | Actual: 9.0
-[2] Pred: 8.83 | Actual: 8.6
-...
+pred = model.predict(movie_df)[0]
+actual = y_test.loc[movie_df.index[0]]
 ```
 
 ---
 
-## 📈 Visualization
-
-* Line chart comparing predicted vs actual ratings
-* Helps identify:
-
-  * Bias toward average
-  * Prediction variance
-  * Model limitations
-
----
-
-## 🧪 Evaluation
+### 📊 Scatter Plot
 
 ```python
-from sklearn.metrics import mean_squared_error
-
-mse = mean_squared_error(actual_ratings, predictions)
-print("MSE:", mse)
+plt.scatter(y_test, preds)
 ```
+
+---
+
+### 📉 Perfect Prediction Line
+
+```python
+plt.plot([y_test.min(), y_test.max()],
+         [y_test.min(), y_test.max()],
+         linestyle='--')
+```
+
+---
+
+## 🧪 Key Observations
+
+* Model tends to predict near average (~8.0)
+* Indicates **limited feature signal**
+* Stronger features → better predictions
 
 ---
 
 ## ⚠️ Limitations
 
-* Model tends to predict near average (regression to mean)
-* Limited feature set reduces prediction accuracy
-* Evaluation performed on same dataset (not true generalization)
+* Basic feature set (missing director, actors, year)
+* No hyperparameter tuning
+* Limited generalization testing
+* Genre encoding may introduce sparsity
 
 ---
 
 ## 🔥 Future Improvements
 
-* Add stronger features:
+* Add high-impact features:
 
   * Director
   * Cast
   * Release year
-  * Awards
-* Use train/test split for proper evaluation
-* Upgrade model (e.g., Random Forest)
-* Build API for real-time predictions
-* Create interactive dashboard
+* Apply log scaling to votes
+* Hyperparameter tuning
+* Build REST API for predictions
+* Deploy as web dashboard
 
 ---
 
@@ -183,34 +242,38 @@ print("MSE:", mse)
 
 * Python
 * Pandas
-* NumPy
 * Matplotlib
 * Joblib
-* Scikit-learn
+* scikit-learn
 
 ---
 
 ## 🧠 Key Insight
 
-> The hardest part of machine learning is not the model —
-> it's making real-world data match the model’s expectations.
+> Machine learning is not about the model —
+> it's about making data compatible with the model.
 
 ---
 
-## 📌 Author
+## 👨‍💻 Author
 
-Built as part of a deep dive into:
+Focused on:
 
-* Machine Learning pipelines
-* Data engineering
 * System design thinking
+* Data pipelines
+* Building scalable ML systems
 
 ---
 
-If you want, I can also:
+# 🚀 Optional (if you want next level)
 
-* Add badges (GitHub style)
-* Create a demo GIF section
-* Turn this into a portfolio-level project (🔥 for jobs)
+I can upgrade this README to:
 
-Just tell me 👍
+* ⭐ GitHub badges
+* 📸 Graph screenshots section
+* 🎥 Demo GIF (huge for portfolio)
+* 📦 “How to run” section (very important)
+
+Just say **“make it portfolio-level”** and I’ll push it further.
+
+<img width="1037" height="834" alt="Screenshot 2026-04-23 004227" src="https://github.com/user-attachments/assets/b7e97d4d-22d1-49d0-91e0-39ea2dbf8a54" />
